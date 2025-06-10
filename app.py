@@ -487,7 +487,7 @@ if page == "Abstract":
     with col1:
         st.write("""
         **🔬 Live Statistical Analysis:**
-        - Regression Models (Random Effects, Fixed Effects, Negative Binomial)
+        - Regression Models (Random effects, Fixed effects, Negative Binomial)
         - Dynamic control variable selection
         - Automatic log transformations
         - Industry and year fixed effects
@@ -511,7 +511,7 @@ if page == "Abstract":
     """)
     
     st.success("🚀 **Get Started**: Navigate to the 'Analyses' tab to run live statistical models on the data!")
-    
+
     st.header("Contact")
     st.write("""
     For questions about this research or to collaborate, please contact:
@@ -520,6 +520,7 @@ if page == "Abstract":
     PhD Student, Florida International University  
     [FIU PhD Student Directory](https://business.fiu.edu/academics/graduate/phd/student-directory/)
     """)
+
 
 elif page == "Data":
     st.title("Dataset")
@@ -698,34 +699,37 @@ elif page == "Analysis":
                 st.caption("Note: *p<0.1; **p<0.05; ***p<0.01")
                 
                 # Generate prediction for plot
-                if 'ceo_international_experience' in results.params.index:
+                if 'ceo_political_ideology' in results.params.index:
                     # Add the effect plot here
                     st.markdown("---")
                     st.subheader("Effect of CEO International Experience on Corporate Misconduct")
                     
                     # Create prediction data
-                    experience_range = np.linspace(0, 1, 100)
+                    ideology_range = np.linspace(0, 1, 100)
                     
                     # Get coefficients for prediction
                     const_coef = results.params.get('const', 0)
-                    experience_coef = results.params.get('ceo_international_experience', 0)
+                    ideology_coef = results.params.get('ceo_political_ideology', 0)
+                    partisanship_coef = results.params.get('ceo_political_partisanship', 0)
                     
                     # Create predictions (simplified - using mean values for other variables)
-                    if model_type == "Fixed Effects":
-                        predictions = const_coef + experience_coef * experience_range
-                    else:  # Random Effects/Negative Binomial
-                        linear_pred = const_coef + experience_coef * experience_range
+                    mean_partisanship = df['ceo_political_partisanship'].mean()
+                    
+                    if model_type == "OLS":
+                        predictions = const_coef + ideology_coef * ideology_range + partisanship_coef * mean_partisanship
+                    else:  # Poisson/Negative Binomial
+                        linear_pred = const_coef + ideology_coef * ideology_range + partisanship_coef * mean_partisanship
                         predictions = np.exp(linear_pred)
                     
                     # Create interactive plot
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(
-                        x=experience_range, 
+                        x=ideology_range, 
                         y=predictions,
                         mode='lines',
                         line=dict(color='steelblue', width=3),
                         name=f'{model_type} Prediction',
-                        hovertemplate='<b>CEO International Experience</b>: %{x:.2f}<br>' +
+                        hovertemplate='<b>CEO Political Ideology</b>: %{x:.2f}<br>' +
                                     '<b>Predicted Misconduct</b>: %{y:.2f}<br>' +
                                     '<extra></extra>'
                     ))
@@ -745,12 +749,12 @@ elif page == "Analysis":
                     
                     # Add interpretation
                     st.info(f"""
-                    **Model Interpretation**: This plot shows the predicted relationship between CEO international experience 
+                    **Model Interpretation**: This plot shows the predicted relationship between CEO political ideology 
                     and corporate misconduct based on your selected {model_type} model with {len(selected_controls)} control variables.
                     The shape of the curve reflects the actual estimated coefficients from the regression.
                     """)
                 else:
-                    st.warning("CEO International Experience coefficient not found in model results.")
+                    st.warning("CEO Political Ideology coefficient not found in model results.")
             else:
                 st.error("Failed to run regression model. Please check your variable selections.")
         
